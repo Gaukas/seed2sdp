@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"net"
-	"regexp"
 	"strconv"
 	"strings"
 
@@ -25,11 +24,12 @@ func RecoverIPAddr(IPUpper uint64, IPLower uint64) (net.IP, error) {
 	byteIP := make([]byte, 16)
 
 	for i := 7; i >= 0; i-- {
-		byteIP[i+8] = uint8(IPUpper>>(7*i)) & 0xFF
-		byteIP[i] = uint8(IPLower>>(7*i)) & 0xFF
+		byteIP[i+8] = uint8(IPUpper >> (8 * i) & 0xFF)
+		byteIP[i] = uint8(IPLower >> (8 * i) & 0xFF)
 	}
 
 	RecoveredIP := net.IP(byteIP)
+
 	// RecoveredIP := net.IP{uint8((IPUpper >> 56) & 0xFF),
 	// 	uint8((IPUpper >> 48) & 0xFF),
 	// 	uint8((IPUpper >> 40) & 0xFF),
@@ -49,7 +49,7 @@ func RecoverIPAddr(IPUpper uint64, IPLower uint64) (net.IP, error) {
 	// }
 
 	// Check if valid IP
-	if RecoveredIP.To16() != nil {
+	if RecoveredIP.To16() == nil {
 		return nil, errors.New("Invalid IP")
 	}
 
@@ -64,6 +64,7 @@ func InflateICECandidate(IPUpper uint64, IPLower uint64, ComposedUint32 uint32) 
 	if errIP != nil {
 		return ICECandidate{}
 	}
+
 	component := ICEComponent((ComposedUint32 >> 0 & 0x01) + 1)   // 1 bit, 1/2
 	protocol := ICENetworkProtocol(ComposedUint32 >> 1 & 0x01)    // 1 bit, 0/1
 	candidateType := ICECandidateType(ComposedUint32 >> 2 & 0x03) // 2 bits, 0/1/2/3
@@ -112,23 +113,25 @@ func (SD *SdpDeflated) Inflate(GlobalLinesOverride SdpGlobal, Payload string, Fp
 	}
 }
 
-func (S *Sdp) Deflate(UseIP net.IP, GlobalLinesExtracted *SdpGlobal, PayloadExtracted *string, FpExtracted *webrtc.DTLSFingerprint, IceParamsExtracted *ICEParameters) SdpDeflated {
-	if GlobalLinesExtracted != nil {
-		*GlobalLinesExtracted = S.GlobalLines
-	}
-	if PayloadExtracted != nil {
-		*PayloadExtracted = S.Payload
-	}
-	if FpExtracted != nil {
-		*FpExtracted = S.Fingerprint
-	}
-	if IceParamsExtracted != nil {
-		*IceParamsExtracted = S.IceParams
-	}
+// Abandoned. We don't want to extract those.
+// func (S *Sdp) Deflate(UseIP net.IP, GlobalLinesExtracted *SdpGlobal, PayloadExtracted *string, FpExtracted *webrtc.DTLSFingerprint, IceParamsExtracted *ICEParameters) SdpDeflated {
+// 	if GlobalLinesExtracted != nil {
+// 		*GlobalLinesExtracted = S.GlobalLines
+// 	}
+// 	if PayloadExtracted != nil {
+// 		*PayloadExtracted = S.Payload
+// 	}
+// 	if FpExtracted != nil {
+// 		*FpExtracted = S.Fingerprint
+// 	}
+// 	if IceParamsExtracted != nil {
+// 		*IceParamsExtracted = S.IceParams
+// 	}
 
+func (S *Sdp) Deflate(UseIP net.IP) SdpDeflated {
 	sdp_d := ""
 
-	if S.SDPType == "answer" {
+	if S.SDPType == "offer" {
 		sdp_d += "1"
 	} else {
 		sdp_d += "2"
@@ -157,11 +160,12 @@ func (S *Sdp) Deflate(UseIP net.IP, GlobalLinesExtracted *SdpGlobal, PayloadExtr
 
 	// IPUpperUint64, IPLowerUint64
 	IPFound := (*c_ptr).ipAddr.To16()
+
 	IPUpper := uint64(0)
 	IPLower := uint64(0)
 	for i := 7; i >= 0; i-- {
-		IPUpper += uint64(IPFound[8+i]) << (i * 8)
-		IPLower += uint64(IPFound[i]) << (i * 8)
+		IPUpper += uint64((IPFound[i+8])&0xFF) << (i * 8)
+		IPLower += uint64((IPFound[i])&0xFF) << (i * 8)
 	}
 
 	sdp_d += fmt.Sprintf(",%d,%d", IPUpper, IPLower)
@@ -182,58 +186,4 @@ func (S *Sdp) Deflate(UseIP net.IP, GlobalLinesExtracted *SdpGlobal, PayloadExtr
 	sdp_d += fmt.Sprintf(",%d", ComposedUint32)
 
 	return SdpDeflated(sdp_d)
-}
-
-func probeComponent(candidate_text string) ICEComponent {
-
-}
-
-func probeProtocol(candidate_text string) ICENetworkProtocol {
-
-}
-
-func probeCandidateType(candidate_text string) ICECandidateType {
-
-}
-
-func probeTcpType(candidate_text string) ice.TCPType {
-
-}
-
-func parseCandidate(candidate_text string) (uint32, uint32, net.IP, uint16, error) {
-
-}
-
-func ParseSDP(sdp_text string) Sdp {
-	S := Sdp{}
-	isOffer, _ := regexp.MatchString(`"type":"offer"`, sdp_text)
-	isAnswer, _ := regexp.MatchString(`"type":"answer"`, sdp_text)
-	if isOffer {
-		S.SDPType = "offer" // 0 for offer
-	} else if isAnswer {
-		S.SDPType = "answer" // 1 for answer
-	}
-
-	// Global Lines
-
-	// Payload shouldn't be automatically added -- they are not helpful
-
-	// Extract all candidates
-	reAllCandidate := regexp.MustCompile(`a=candidate:.*?\\r\\n`)
-	candidates := reAllCandidate.FindAllString(sdp_text, -1)
-
-	for _, candidate := range candidates {
-		RTPmatch := rePubRTPCandidate.FindString(candidate)
-		RTCPmatch := rePubRTCPCandidate.FindString(candidate)
-		if RTPmatch != "" {
-			// fmt.Println(RTPmatch)
-			miniSDP += "," + b64Encode(strings.ReplaceAll(RTPmatch, "a=candidate:", ""))
-		}
-		if RTCPmatch != "" {
-			// fmt.Println(RTCPmatch)
-			miniSDP += "," + b64Encode(strings.ReplaceAll(RTCPmatch, "a=candidate:", ""))
-		}
-	}
-
-	return S
 }
