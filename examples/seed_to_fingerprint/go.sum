@@ -2,6 +2,8 @@ github.com/Gaukas/ice_kai/v2 v2.0.16-a h1:/A0aZKKSNaabAGEkVc4M+eqGuiZ2HZDNMIAD9F
 github.com/Gaukas/ice_kai/v2 v2.0.16-a/go.mod h1:QgAOV2BINbyTfxQXLXOCHkbX6pK9JPCP1LYHOIvKdnI=
 github.com/Gaukas/randutil_kai v0.2.0 h1:6Mnd+xAvHKvVmP/jog2TyqAgcGdGzUFnV7olsIpSMCo=
 github.com/Gaukas/randutil_kai v0.2.0/go.mod h1:6ztIfwsKS2nFtRLVi1wFHDm1xQaFgOuV6F4QiOCEwhI=
+github.com/Gaukas/seed2sdp v0.1.0 h1:8gRkaH09dbVRsuCkGpQGobmBmK5v5m6sbuSFO/GWyMg=
+github.com/Gaukas/seed2sdp v0.1.0/go.mod h1:MvRgwoVVJMoyaMCUmT5C+DEiOQfDMZ8GfhTD2e71HkM=
 github.com/Gaukas/webrtc_kai/v3 v3.0.19-a h1:pveTPmdpJ68n1zy6T7823GRw2GE7uj2oodJ+BWv1Zbs=
 github.com/Gaukas/webrtc_kai/v3 v3.0.19-a/go.mod h1:j1wH3FYqyxTIsBGlbwkE+IDkUrToKiopu0taTf/Lb5c=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
