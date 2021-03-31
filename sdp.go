@@ -36,11 +36,11 @@ func (s *Sdp) String() string {
 func parseCandidate(candidate_text string) ICECandidate {
 	trimC := strings.ReplaceAll(strings.ReplaceAll(candidate_text, `\r\n`, ""), `a=candidate:`, "")
 
-	fmt.Println("Candidate:", trimC)
+	// fmt.Println("Candidate:", trimC)
 
 	splitC := strings.Split(trimC, " ")
 
-	fmt.Println("Candidate splited into", len(splitC), "parts.")
+	// fmt.Println("Candidate splited into", len(splitC), "parts.")
 
 	foundation_64, _ := strconv.ParseUint(splitC[0], 10, 32)
 	component_64, _ := strconv.ParseUint(splitC[1], 10, 8)

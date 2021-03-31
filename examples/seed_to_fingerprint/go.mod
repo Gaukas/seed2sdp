@@ -1,4 +1,4 @@
-module example.com/seed_to_fingerprint
+module github.com/Gaukas/seed2sdp/examples/seed_to_fingerprint
 
 go 1.15
 

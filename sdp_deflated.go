@@ -65,7 +65,8 @@ func InflateICECandidate(IPUpper uint64, IPLower uint64, ComposedUint32 uint32) 
 		return ICECandidate{}
 	}
 
-	component := ICEComponent((ComposedUint32 >> 0 & 0x01) + 1)   // 1 bit, 1/2
+	component := ICEComponent((ComposedUint32 >> 0 & 0x01) + 1) // 1 bit, 1/2
+	// fmt.Println("Parsed component:", component)
 	protocol := ICENetworkProtocol(ComposedUint32 >> 1 & 0x01)    // 1 bit, 0/1
 	candidateType := ICECandidateType(ComposedUint32 >> 2 & 0x03) // 2 bits, 0/1/2/3
 	tcpType := ice.TCPType(ComposedUint32 >> 4 & 0x03)            // 2 bits, 0/1/2/3
@@ -81,8 +82,8 @@ func InflateICECandidate(IPUpper uint64, IPLower uint64, ComposedUint32 uint32) 
 	return inflatedIC
 }
 
-func (SD *SdpDeflated) Inflate(GlobalLinesOverride SdpGlobal, Payload string, Fp webrtc.DTLSFingerprint, IceParams ICEParameters) *Sdp {
-	s := strings.Split(string(*SD), ",")
+func (SD SdpDeflated) Inflate(GlobalLinesOverride SdpGlobal, Payload string, Fp webrtc.DTLSFingerprint, IceParams ICEParameters) *Sdp {
+	s := strings.Split(string(SD), ",")
 	IPUpper, _ := strconv.ParseUint(s[1], 10, 64)
 	IPLower, _ := strconv.ParseUint(s[2], 10, 64)
 	ComposedUint32_64, _ := strconv.ParseUint(s[3], 10, 32)
@@ -144,6 +145,7 @@ func (S *Sdp) Deflate(UseIP net.IP) SdpDeflated {
 		for _, c := range S.IceCandidates {
 			if c.ipAddr.Equal(UseIP) {
 				c_ptr = &c
+				break
 			}
 		}
 		if c_ptr == nil { // not found

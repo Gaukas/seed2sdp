@@ -1,4 +1,4 @@
-module example.com/sdp_to_string
+module github.com/Gaukas/seed2sdp/examples/sdp_to_string
 
 go 1.15
 

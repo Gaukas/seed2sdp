@@ -1,4 +1,4 @@
-module example.com/seed_to_iceparams
+module github.com/Gaukas/seed2sdp/examples/seed_to_iceparams
 
 go 1.15
 
