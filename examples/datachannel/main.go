@@ -10,7 +10,7 @@ import (
 )
 
 func usage() {
-	fmt.Println("Usage: ./datachannel [seed] [offer/anwer]")
+	fmt.Println("Usage: ./datachannel [seed] [offer/answer]")
 }
 
 func main() {
