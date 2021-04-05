@@ -31,6 +31,10 @@ func main() {
 
 	offerFp, _ := s2s.PredictDTLSFingerprint(secret, seed, prefix_offer)
 	answerFp, _ := s2s.PredictDTLSFingerprint(secret, seed, prefix_answer)
+
+	fmt.Println("Offer Fp:", offerFp)
+	fmt.Println("Answer Fp:", answerFp)
+
 	offerICE, _ := s2s.PredictIceParameters(secret, seed, prefix_offer)
 	answerICE, _ := s2s.PredictIceParameters(secret, seed, prefix_answer)
 
