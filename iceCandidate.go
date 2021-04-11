@@ -5,7 +5,7 @@ import (
 	"hash/crc32"
 	"net"
 
-	ice "github.com/Gaukas/ice_kai/v2"
+	"github.com/pion/ice/v2"
 )
 
 const (

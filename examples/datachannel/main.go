@@ -6,7 +6,7 @@ import (
 	"os"
 
 	s2s "github.com/Gaukas/seed2sdp"
-	webrtc "github.com/Gaukas/webrtc_kai/v3"
+	"github.com/pion/webrtc/v3"
 )
 
 func usage() {

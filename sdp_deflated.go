@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"strings"
 
-	ice "github.com/Gaukas/ice_kai/v2"
-	webrtc "github.com/Gaukas/webrtc_kai/v3"
+	"github.com/pion/ice/v2"
+	"github.com/pion/webrtc/v3"
 )
 
 // SdpDeflated = String(int(SDPType))+","+String(IPUpperUint64)+","+String(IPLowerUint64)+","+String(ComposedUint32)
