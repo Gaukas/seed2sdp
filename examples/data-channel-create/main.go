@@ -15,7 +15,7 @@ const (
 )
 
 func usage() {
-	fmt.Println("Usage: ./data-channel-create [seed]")
+	fmt.Println("Usage: ./data-channel-create [seed] [offer/answer]")
 	fmt.Println("Min seed length: 6 Bytes") // Magic Number 6.
 }
 
