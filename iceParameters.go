@@ -2,8 +2,10 @@ package seed2sdp
 
 import (
 	"crypto/sha256"
+	"errors"
 
 	randutil "github.com/Gaukas/randutil_kai"
+	"github.com/pion/webrtc/v3"
 	"golang.org/x/crypto/hkdf"
 )
 
@@ -23,22 +25,22 @@ type ICEParameters struct {
 	ICELite          bool   // Always false for now
 }
 
-func GetUfrag(secret []byte, salt []byte, infoPrefix []byte) (string, error) {
-	uFragReader := hkdf.New(sha256.New, Secret, Salt, append(InfoPrefix, []byte("IceUfrag")...))
+func GetUfrag(hkdfParams *HKDFParams) (string, error) {
+	uFragReader := hkdf.New(sha256.New, hkdfParams.secret, hkdfParams.salt, append(hkdfParams.infoPrefix, []byte("IceUfrag")...))
 	return randutil.GenerateReaderCryptoRandomString(lenUFrag, runesAlpha, uFragReader)
 }
 
-func GetPwd(secret []byte, salt []byte, infoPrefix []byte) (string, error) {
-	pwdReader := hkdf.New(sha256.New, Secret, Salt, append(InfoPrefix, []byte("IcePwd")...))
+func GetPwd(hkdfParams *HKDFParams) (string, error) {
+	pwdReader := hkdf.New(sha256.New, hkdfParams.secret, hkdfParams.salt, append(hkdfParams.infoPrefix, []byte("IcePwd")...))
 	return randutil.GenerateReaderCryptoRandomString(lenPwd, runesAlpha, pwdReader)
 }
 
-func PredictIceParameters(secret []byte, salt []byte, infoPrefix []byte) (ICEParameters, error) {
-	ufrag, err := GetUfrag(Secret, Salt, InfoPrefix)
+func PredictIceParameters(hkdfParams *HKDFParams) (ICEParameters, error) {
+	ufrag, err := GetUfrag(hkdfParams)
 	if err != nil {
 		return ICEParameters{}, err
 	}
-	pwd, err := GetPwd(Secret, Salt, InfoPrefix)
+	pwd, err := GetPwd(hkdfParams)
 	if err != nil {
 		return ICEParameters{}, err
 	}
@@ -47,4 +49,16 @@ func PredictIceParameters(secret []byte, salt []byte, infoPrefix []byte) (ICEPar
 		Password:         pwd,
 		ICELite:          false,
 	}, nil
+}
+
+func (i ICEParameters) Equal(d ICEParameters) bool {
+	return i.UsernameFragment == d.UsernameFragment && i.Password == d.Password && i.ICELite == d.ICELite
+}
+
+func (i *ICEParameters) UpdateSettingEngine(se *webrtc.SettingEngine) error {
+	if i.UsernameFragment == "" || i.Password == "" {
+		return errors.New("Malformed ICEParameters")
+	}
+	se.SetICECredentials(i.UsernameFragment, i.Password)
+	return nil
 }
