@@ -1,19 +1,17 @@
 package seed2sdp
 
-import webrtc "github.com/Gaukas/webrtc_kai/v3"
+import "github.com/pion/webrtc/v3"
 
 // type DTLSFingerprint string
 
-func PredictDTLSFingerprint(Secret []byte, Salt []byte, InfoPrefix []byte) (webrtc.DTLSFingerprint, error) {
-	privkey, _ := getPrivkey(Secret, Salt, InfoPrefix)
-	certificate, errCert := GetCertificate(Secret, Salt, InfoPrefix, privkey)
-	if errCert != nil {
-		return webrtc.DTLSFingerprint{}, errCert
+func PredictDTLSFingerprint(hkdfParams *HKDFParams) (webrtc.DTLSFingerprint, error) {
+	cert, err := GetCertificate(hkdfParams)
+	if err != nil {
+		return webrtc.DTLSFingerprint{}, err
 	}
-
-	DTLSFPS, errFp := certificate.GetFingerprints()
-	if errFp != nil {
-		return webrtc.DTLSFingerprint{}, errFp
+	DTLSFPS, err := cert.GetFingerprints()
+	if err != nil {
+		return webrtc.DTLSFingerprint{}, err
 	}
 	return DTLSFPS[0], nil
 }

@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	webrtc "github.com/Gaukas/webrtc_kai/v3"
+	"github.com/pion/webrtc/v3"
 )
 
 type Sdp struct {
