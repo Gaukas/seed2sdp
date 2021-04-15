@@ -15,4 +15,4 @@ seed2sdp(this project) eliminates the random info in SDP by replacing the uncont
 
 [Pion](https://pion.ly/)
 - Pure Go WebRTC API Implementation [pion/webrtc](https://github.com/pion/webrtc)
-- Pure Go ICE Implementation [pion/ice](https:  //github.com/pion/ice)
+- Pure Go ICE Implementation [pion/ice](https://github.com/pion/ice)
