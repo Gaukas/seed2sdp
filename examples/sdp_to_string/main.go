@@ -17,7 +17,7 @@ func main() {
 		SetPort(63447).
 		SetCandidateType(s2s.Srflx)
 
-	sampleSDP := s2s.Sdp{
+	sampleSDP := s2s.SDP{
 		SDPType: "offer",
 		GlobalLines: s2s.SdpGlobal{
 			SessionId:   5615412156857050866,

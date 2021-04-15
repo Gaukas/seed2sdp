@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	hkdfParams, _ := s2s.NewHKDFParams([]byte("ExampleSecret"), []byte("ExampleSeed"), []byte("ExamplePrefix"))
+	hkdfParams := s2s.NewHKDFParams().SetSecret("ExampleSecret").SetSalt("ExampleSeed").SetInfoPrefix("ExamplePrefix")
 	iceParams, _ := s2s.PredictIceParameters(hkdfParams)
 	fmt.Println("ice-ufrag: ", iceParams.UsernameFragment)
 	fmt.Println("ice-pwd: ", iceParams.Password)

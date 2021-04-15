@@ -10,7 +10,7 @@ import (
 	"github.com/pion/webrtc/v3"
 )
 
-type Sdp struct {
+type SDP struct {
 	SDPType       string // "offer", "answer"
 	GlobalLines   SdpGlobal
 	Payload       string
@@ -19,7 +19,7 @@ type Sdp struct {
 	IceCandidates []ICECandidate
 }
 
-func (s *Sdp) String() string {
+func (s *SDP) String() string {
 	strsdp := fmt.Sprintf(`{"type":"%s","sdp":"v=0\r\n`, s.SDPType)
 	strsdp += s.GlobalLines.String()
 	strsdp += s.Payload
@@ -81,8 +81,8 @@ func parseCandidate(candidate_text string) ICECandidate {
 	}
 }
 
-func ParseSDP(sdp_text string) Sdp {
-	S := Sdp{}
+func ParseSDP(sdp_text string) SDP {
+	S := SDP{}
 	isOffer, _ := regexp.MatchString(`"type":"offer"`, sdp_text)
 	isAnswer, _ := regexp.MatchString(`"type":"answer"`, sdp_text)
 	if isOffer {

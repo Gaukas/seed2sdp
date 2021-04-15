@@ -5,8 +5,8 @@ go:
 
 os:
 - linux
-- osx
-- windows
+# - osx
+# - windows
 
 script:
 - go build
