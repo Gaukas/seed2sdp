@@ -135,8 +135,8 @@ func main() {
 
 	JsonOffer := s2s.ToJSON(dataChannel.GetLocalDescription())
 	ParsedOffer := s2s.ParseSDP(JsonOffer)
-	// DeflatedOffer := ParsedOffer.Deflate(MyPublicIP(v4))
-	DeflatedOffer := ParsedOffer.Deflate(net.ParseIP("192.168.24.132"))
+	DeflatedOffer := ParsedOffer.Deflate(MyPublicIP(v4))
+	// DeflatedOffer := ParsedOffer.Deflate(net.ParseIP("192.168.24.132"))
 
 	fmt.Println("====================== Offer ======================")
 	fmt.Println(JsonOffer)
@@ -162,6 +162,8 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
+	time.Sleep(3 * time.Second)
 
 	for sendmsgcntr = 0; sendmsgcntr < maxcntr; sendmsgcntr++ {
 		for !dataChannel.ReadyToSend() {

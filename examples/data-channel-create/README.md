@@ -1,7 +1,7 @@
 # data-channel-create
 data-channel-create is based on the Pion WebRTC application `data-channels-create` that shows how you can send/recv DataChannel messages. You need to run 2 instance at the same time for this application to function properly.
 
-* This example is out-of-date. Please refer to data-channel-instance instead.
+* This example is out-of-date. Please refer to data-channel-client/server instead.
 
 ## Instructions
 ### Download data-channel-create
