@@ -5,7 +5,7 @@ data-channel-create is based on the Pion WebRTC application `data-channels-serve
 ### Download data-channel-server
 ```
 export GO111MODULE=on
-go get github.com/Gaukas/seed2sdp/examples/data-channel-client
+go get github.com/Gaukas/seed2sdp/examples/data-channel-server
 ```
 
 ### Run data-channel-server
