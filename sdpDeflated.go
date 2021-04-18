@@ -82,11 +82,17 @@ func InflateICECandidate(IPUpper uint64, IPLower uint64, ComposedUint32 uint32) 
 	return inflatedIC
 }
 
-func (SD SdpDeflated) Inflate(GlobalLinesOverride SdpGlobal, Payload string, Fp webrtc.DTLSFingerprint, IceParams ICEParameters) *SDP {
+func InflateICECandidateFromSD(SD SdpDeflated) ICECandidate {
 	s := strings.Split(string(SD), ",")
 	IPUpper, _ := strconv.ParseUint(s[1], 10, 64)
 	IPLower, _ := strconv.ParseUint(s[2], 10, 64)
 	ComposedUint32_64, _ := strconv.ParseUint(s[3], 10, 32)
+
+	return InflateICECandidate(IPUpper, IPLower, uint32(ComposedUint32_64))
+}
+
+func (SD SdpDeflated) Inflate(GlobalLinesOverride SdpGlobal, Payload string, Fp webrtc.DTLSFingerprint, IceParams ICEParameters) *SDP {
+	s := strings.Split(string(SD), ",")
 
 	// SDPType
 	if s[0] == "1" {
@@ -97,7 +103,7 @@ func (SD SdpDeflated) Inflate(GlobalLinesOverride SdpGlobal, Payload string, Fp 
 			Fingerprint: Fp,
 			IceParams:   IceParams,
 			IceCandidates: []ICECandidate{
-				InflateICECandidate(IPUpper, IPLower, uint32(ComposedUint32_64)),
+				InflateICECandidateFromSD(SD),
 			},
 		}
 	} else {
@@ -108,7 +114,7 @@ func (SD SdpDeflated) Inflate(GlobalLinesOverride SdpGlobal, Payload string, Fp 
 			Fingerprint: Fp,
 			IceParams:   IceParams,
 			IceCandidates: []ICECandidate{
-				InflateICECandidate(IPUpper, IPLower, uint32(ComposedUint32_64)),
+				InflateICECandidateFromSD(SD),
 			},
 		}
 	}
