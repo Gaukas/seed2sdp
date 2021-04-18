@@ -25,10 +25,9 @@ func main() {
 		return
 	}
 
-	secret := []byte("0xFEEDCAFEC0DEDEADBEEFBABEBAAD")
-	seed := []byte(os.Args[1])
-	offerHKDFParams, _ := s2s.NewHKDFParams(secret, seed, []byte(offerHKDFPrefix))
-	answerHKDFParams, _ := s2s.NewHKDFParams(secret, seed, []byte(answerHKDFPrefix))
+	programSecret := "0xFEEDCAFEC0DEDEADBEEFBABEBAAD"
+	offerHKDFParams := s2s.NewHKDFParams().SetSecret(programSecret).SetSalt(os.Args[1]).SetInfoPrefix(offerHKDFPrefix)
+	answerHKDFParams := s2s.NewHKDFParams().SetSecret(programSecret).SetSalt(os.Args[1]).SetInfoPrefix(answerHKDFPrefix)
 
 	// fmt.Println("Offer Fp:", offerFp)
 	// fmt.Println("Offer ICE:", offerICE)

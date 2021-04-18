@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	hkdfParams, _ := s2s.NewHKDFParams([]byte("ExampleSecret"), []byte("ExampleSeed"), []byte("ExamplePrefix"))
+	hkdfParams := s2s.NewHKDFParams().SetSecret("ExampleSecret").SetSalt("ExampleSeed").SetInfoPrefix("ExamplePrefix")
 	fp, _ := s2s.PredictDTLSFingerprint(hkdfParams)
 	fmt.Println("Fingerprint: ", fp)
 }
