@@ -212,3 +212,31 @@ func candidatesToString(arrc []ICECandidate) string {
 	parsed_as += `a=end-of-candidates\r\n`
 	return parsed_as
 }
+
+func candidateToAttribute(c ICECandidate) SDPAttribute {
+	return SDPAttribute{
+		Key: "candidate",
+		Value: fmt.Sprintf(`%d %d %s %d %s %d typ %s`,
+			c.Foundation(),
+			c.component,
+			c.protocol.String(),
+			c.Priority(),
+			c.ipAddr.String(),
+			c.port,
+			c.candidateType.String()),
+	}
+}
+
+func candidatesToAttributes(listc []ICECandidate) []SDPAttribute {
+	lista := []SDPAttribute{}
+
+	for _, c := range listc {
+		lista = append(lista, candidateToAttribute(c))
+	}
+
+	lista = append(lista, SDPAttribute{
+		Value: "end-of-candidates",
+	})
+
+	return lista
+}

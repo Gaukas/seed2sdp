@@ -8,17 +8,16 @@ import (
 	"strings"
 
 	"github.com/pion/ice/v2"
-	"github.com/pion/webrtc/v3"
 )
 
-// SdpDeflated = String(int(SDPType))+","+String(IPUpperUint64)+","+String(IPLowerUint64)+","+String(ComposedUint32)
+// SDPDeflated = String(int(SDPType))+","+String(IPUpperUint64)+","+String(IPLowerUint64)+","+String(ComposedUint32)
 // ComposedUint32[16..31]: ICECandidate.port * (1<<16)
 // ComposedUint32[6..15]: Reserved
 // ComposedUint32[4..5]: ICECandidate.tcpType * (1<<4)
 // ComposedUint32[2..3]: ICECandidate.candidateType * (1<<2)
 // ComposedUint32[1]: ICECandidate.protocol * (1<<1)
 // ComposedUint32[0]: ICECandidate.ICEComponent-1
-type SdpDeflated string
+type SDPDeflated string
 
 func RecoverIPAddr(IPUpper uint64, IPLower uint64) (net.IP, error) {
 	byteIP := make([]byte, 16)
@@ -82,7 +81,7 @@ func InflateICECandidate(IPUpper uint64, IPLower uint64, ComposedUint32 uint32) 
 	return inflatedIC
 }
 
-func InflateICECandidateFromSD(SD SdpDeflated) ICECandidate {
+func InflateICECandidateFromSD(SD SDPDeflated) ICECandidate {
 	s := strings.Split(string(SD), ",")
 	IPUpper, _ := strconv.ParseUint(s[1], 10, 64)
 	IPLower, _ := strconv.ParseUint(s[2], 10, 64)
@@ -91,51 +90,29 @@ func InflateICECandidateFromSD(SD SdpDeflated) ICECandidate {
 	return InflateICECandidate(IPUpper, IPLower, uint32(ComposedUint32_64))
 }
 
-func (SD SdpDeflated) Inflate(GlobalLinesOverride SdpGlobal, Payload string, Fp webrtc.DTLSFingerprint, IceParams ICEParameters) *SDP {
-	s := strings.Split(string(SD), ",")
+func (sd SDPDeflated) Inflate() (*SDP, error) {
+	s := strings.Split(string(sd), ",")
 
 	// SDPType
 	if s[0] == "1" {
 		return &SDP{
-			SDPType:     "offer",
-			GlobalLines: GlobalLinesOverride,
-			Payload:     Payload,
-			Fingerprint: Fp,
-			IceParams:   IceParams,
+			SDPType: "offer",
 			IceCandidates: []ICECandidate{
-				InflateICECandidateFromSD(SD),
+				InflateICECandidateFromSD(sd),
 			},
-		}
-	} else {
+		}, nil
+	} else if s[0] == "2" {
 		return &SDP{
-			SDPType:     "answer",
-			GlobalLines: GlobalLinesOverride,
-			Payload:     Payload,
-			Fingerprint: Fp,
-			IceParams:   IceParams,
+			SDPType: "answer",
 			IceCandidates: []ICECandidate{
-				InflateICECandidateFromSD(SD),
+				InflateICECandidateFromSD(sd),
 			},
-		}
+		}, nil
 	}
+	return nil, errors.New("")
 }
 
-// Abandoned. We don't want to extract those.
-// func (S *Sdp) Deflate(UseIP net.IP, GlobalLinesExtracted *SdpGlobal, PayloadExtracted *string, FpExtracted *webrtc.DTLSFingerprint, IceParamsExtracted *ICEParameters) SdpDeflated {
-// 	if GlobalLinesExtracted != nil {
-// 		*GlobalLinesExtracted = S.GlobalLines
-// 	}
-// 	if PayloadExtracted != nil {
-// 		*PayloadExtracted = S.Payload
-// 	}
-// 	if FpExtracted != nil {
-// 		*FpExtracted = S.Fingerprint
-// 	}
-// 	if IceParamsExtracted != nil {
-// 		*IceParamsExtracted = S.IceParams
-// 	}
-
-func (S *SDP) Deflate(UseIP net.IP) SdpDeflated {
+func (S *SDP) Deflate(UseIP net.IP) SDPDeflated {
 	sdp_d := ""
 
 	if S.SDPType == "offer" {
@@ -193,5 +170,5 @@ func (S *SDP) Deflate(UseIP net.IP) SdpDeflated {
 
 	sdp_d += fmt.Sprintf(",%d", ComposedUint32)
 
-	return SdpDeflated(sdp_d)
+	return SDPDeflated(sdp_d)
 }
