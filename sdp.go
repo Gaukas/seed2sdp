@@ -11,22 +11,58 @@ import (
 )
 
 type SDP struct {
-	SDPType       string // "offer", "answer"
-	GlobalLines   SdpGlobal
-	Payload       string
-	Fingerprint   webrtc.DTLSFingerprint
-	IceParams     ICEParameters
-	IceCandidates []ICECandidate
+	SDPType       string                 // value of "type" key
+	Malleables    SDPMalleables          // v, o, s, t, c lines in "sdp" key's value
+	Medias        []SDPMedia             // m lines in "sdp" key's value
+	Attributes    []SDPAttribute         // a lines in "sdp" key's value
+	Fingerprint   webrtc.DTLSFingerprint // Also an attribute, but calculated
+	IceParams     ICEParameters          // Also 2 attribute, but calculated
+	IceCandidates []ICECandidate         // Also attributes, but calculated
 }
 
 func (s *SDP) String() string {
-	strsdp := fmt.Sprintf(`{"type":"%s","sdp":"v=0\r\n`, s.SDPType)
-	strsdp += s.GlobalLines.String()
-	strsdp += s.Payload
-	strsdp += fmt.Sprintf(`a=fingerprint:%s %s\r\n`, s.Fingerprint.Algorithm, s.Fingerprint.Value)
-	strsdp += fmt.Sprintf(`a=ice-ufrag:%s\r\n`, s.IceParams.UsernameFragment)
-	strsdp += fmt.Sprintf(`a=ice-pwd:%s\r\n`, s.IceParams.Password)
-	strsdp += candidatesToString(s.IceCandidates)
+	// Fixed line
+	strsdp := fmt.Sprintf(`{"type":"%s","sdp":"`, s.SDPType)
+
+	// v, o, s, t, c lines which does not impact negotiation but may be used in renegotiation
+	strsdp += s.Malleables.String()
+
+	// Application Specific Attributes, not generated from seed
+	for _, m := range s.Medias {
+		strsdp += fmt.Sprintf(`m=%s\r\n`, m.String())
+	}
+
+	// Application Specific Attributes, not generated from seed
+	for _, a := range s.Attributes {
+		strsdp += fmt.Sprintf(`a=%s\r\n`, a.String())
+	}
+
+	// fingerprint, as a specific, seed-generated Attribute
+	fingerprintAttr := SDPAttribute{
+		Key:   "fingerprint",
+		Value: fmt.Sprintf(`%s %s`, s.Fingerprint.Algorithm, s.Fingerprint.Value),
+	}
+	strsdp += fmt.Sprintf(`a=%s\r\n`, fingerprintAttr.String())
+
+	// ice-ufrag, as a specific, seed-generated Attribute
+	iceUfrag := SDPAttribute{
+		Key:   "ice-ufrag",
+		Value: s.IceParams.UsernameFragment,
+	}
+	strsdp += fmt.Sprintf(`a=%s\r\n`, iceUfrag.String())
+
+	// ice-pwd, as a specific, seed-generated Attribute
+	icePwd := SDPAttribute{
+		Key:   "ice-pwd",
+		Value: s.IceParams.Password,
+	}
+	strsdp += fmt.Sprintf(`a=%s\r\n`, icePwd.String())
+
+	candidatesAsAttr := candidatesToAttributes(s.IceCandidates)
+
+	for _, c := range candidatesAsAttr {
+		strsdp += fmt.Sprintf(`a=%s\r\n`, c.String())
+	}
 	strsdp += `"}`
 	return strsdp
 }
@@ -103,4 +139,37 @@ func ParseSDP(sdp_text string) SDP {
 	}
 
 	return S
+}
+
+func (s *SDP) SetMalleables(newval SDPMalleables) {
+	s.Malleables = newval
+}
+
+func (s *SDP) AddMedia(newval SDPMedia) {
+	if s.Medias == nil {
+		s.Medias = []SDPMedia{}
+	}
+	s.Medias = append(s.Medias, newval)
+}
+
+func (s *SDP) AddAttrs(newval SDPAttribute) {
+	if s.Attributes == nil {
+		s.Attributes = []SDPAttribute{}
+	}
+	s.Attributes = append(s.Attributes, newval)
+}
+
+func (s *SDP) SetFingerprint(newval webrtc.DTLSFingerprint) {
+	s.Fingerprint = newval
+}
+
+func (s *SDP) SetIceParams(newval ICEParameters) {
+	s.IceParams = newval
+}
+
+func (s *SDP) AddIceCandidates(newval ICECandidate) {
+	if s.IceCandidates == nil {
+		s.IceCandidates = []ICECandidate{}
+	}
+	s.IceCandidates = append(s.IceCandidates, newval)
 }

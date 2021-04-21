@@ -108,8 +108,9 @@ func (d *DataChannel) SetRemoteDescription(remoteCandidates []ICECandidate) erro
 
 	RemoteSDP := SDP{
 		SDPType:       d.config.PeerSDPType,
-		GlobalLines:   d.config.PeerGlobalLines,
-		Payload:       d.config.PeerPayload,
+		Malleables:    SDPMalleablesFromSeed(d.config.PeerHkdfParams),
+		Medias:        d.config.PeerMedias,
+		Attributes:    d.config.PeerAttributes,
 		Fingerprint:   peerFp,
 		IceParams:     peerICE,
 		IceCandidates: remoteCandidates,

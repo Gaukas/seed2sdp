@@ -56,19 +56,33 @@ func main() {
 			SelfHkdfParams: clientHkdfParams,
 			PeerSDPType:    "answer",
 			PeerHkdfParams: serverHkdfParams,
-			PeerGlobalLines: s2s.SdpGlobal{
-				SessionId:   7821628436479802472,
-				SessionVer:  1617173148,
-				NetworkType: s2s.IN,
-				IpaddrType:  s2s.IP4,
-				UnicastAddr: net.IPv4(0, 0, 0, 0),
-				// SessionName: "",
-				// StartingTime: 0,
-				// EndingTime: 0,
-				GroupBundle: []string{"0"},
-				// Payload: "",
+			PeerMedias: []s2s.SDPMedia{
+				{
+					MediaType:   "application",
+					Description: "9 UDP/DTLS/SCTP webrtc-datachannel",
+				},
 			},
-			PeerPayload: activePayload,
+			PeerAttributes: []s2s.SDPAttribute{
+				{
+					Key:   "group",
+					Value: "BUNDLE 0",
+				},
+				{
+					Key:   "setup",
+					Value: "active",
+				},
+				{
+					Key:   "mid",
+					Value: "0",
+				},
+				{
+					Value: "sendrecv", // Transceivers
+				},
+				{
+					Key:   "sctp-port",
+					Value: "5000",
+				},
+			},
 		},
 	)
 

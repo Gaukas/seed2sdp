@@ -56,19 +56,33 @@ func main() {
 			SelfHkdfParams: serverHkdfParams,
 			PeerSDPType:    "offer",
 			PeerHkdfParams: clientHkdfParams,
-			PeerGlobalLines: s2s.SdpGlobal{
-				SessionId:   5615412156857050866,
-				SessionVer:  1614192136,
-				NetworkType: s2s.IN,
-				IpaddrType:  s2s.IP4,
-				UnicastAddr: net.IPv4(0, 0, 0, 0),
-				// SessionName: "",
-				// StartingTime: 0,
-				// EndingTime: 0,
-				GroupBundle: []string{"0"},
-				// Payload:     "",
+			PeerMedias: []s2s.SDPMedia{
+				{
+					MediaType:   "application",
+					Description: "9 UDP/DTLS/SCTP webrtc-datachannel",
+				},
 			},
-			PeerPayload: actpassPayload,
+			PeerAttributes: []s2s.SDPAttribute{
+				{
+					Key:   "group",
+					Value: "BUNDLE 0",
+				},
+				{
+					Key:   "setup",
+					Value: "actpass", // Client should be actpass, so server active.
+				},
+				{
+					Key:   "mid",
+					Value: "0",
+				},
+				{
+					Value: "sendrecv", // Transceivers
+				},
+				{
+					Key:   "sctp-port",
+					Value: "5000",
+				},
+			},
 		},
 	)
 
@@ -148,8 +162,7 @@ func main() {
 		})
 	})
 	//// Stop setting handlers ///
-
-	offerCandidate := s2s.InflateICECandidateFromSD(s2s.SdpDeflated(MustReadStdin()))
+	offerCandidate := s2s.InflateICECandidateFromSD(s2s.SDPDeflated(MustReadStdin()))
 
 	err = dataChannel.SetOffer([]s2s.ICECandidate{offerCandidate})
 	if err != nil {
