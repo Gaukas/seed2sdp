@@ -162,7 +162,6 @@ func main() {
 		})
 	})
 	//// Stop setting handlers ///
-
 	offerCandidate := s2s.InflateICECandidateFromSD(s2s.SDPDeflated(MustReadStdin()))
 
 	err = dataChannel.SetOffer([]s2s.ICECandidate{offerCandidate})
