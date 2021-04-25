@@ -14,7 +14,7 @@ const (
 	v6
 )
 
-// Get Public IP for the device
+// MyPublicIP() gets Public IP for the caller
 func MyPublicIP(version IPVersion) net.IP {
 	urlList := [][]string{
 		{ // IPv4 API
@@ -28,24 +28,24 @@ func MyPublicIP(version IPVersion) net.IP {
 		},
 	}
 	for _, url := range urlList[int(version)] {
-		ip_timeout := make(chan string, 1)
+		ipTimeout := make(chan string, 1)
 		go func() {
 			resp, err := http.Get(url)
 			if err != nil {
-				ip_timeout <- ""
+				ipTimeout <- ""
 			}
 			ip, err := ioutil.ReadAll(resp.Body)
 			if err != nil {
-				ip_timeout <- ""
+				ipTimeout <- ""
 			}
-			ip_timeout <- string(ip)
+			ipTimeout <- string(ip)
 		}()
 
 		select {
-		case ip_valid := <-ip_timeout:
-			final_ip := net.ParseIP(ip_valid)
-			if final_ip != nil {
-				return final_ip
+		case ipValid := <-ipTimeout:
+			ipFinal := net.ParseIP(ipValid)
+			if ipFinal != nil {
+				return ipFinal
 			}
 		case <-time.After(1 * time.Second): // timeout after 1 second
 			continue

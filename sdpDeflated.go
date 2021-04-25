@@ -10,14 +10,54 @@ import (
 	"github.com/pion/ice/v2"
 )
 
-// SDPDeflated = String(int(SDPType))+","+String(IPUpperUint64)+","+String(IPLowerUint64)+","+String(ComposedUint32)
-// ComposedUint32[16..31]: ICECandidate.port * (1<<16)
-// ComposedUint32[6..15]: Reserved
-// ComposedUint32[4..5]: ICECandidate.tcpType * (1<<4)
-// ComposedUint32[2..3]: ICECandidate.candidateType * (1<<2)
-// ComposedUint32[1]: ICECandidate.protocol * (1<<1)
-// ComposedUint32[0]: ICECandidate.ICEComponent-1
-type SDPDeflated string
+const (
+	SDPOffer     uint8  = 1
+	SDPAnswer    uint8  = 2
+	SDPOfferStr  string = "offer"
+	SDPAnswerStr string = "answer"
+)
+
+// SDPDeflated represents the minimal info need to be exchanged for SDP
+type SDPDeflated struct {
+	SDPType    uint8
+	IPUpper64  uint64
+	IPLower64  uint64
+	Composed32 uint32 // [16..31]: ICECandidate.port * (1<<16), [4..5]: ICECandidate.tcpType * (1<<4), [2..3]: ICECandidate.candidateType * (1<<2), [1]: ICECandidate.protocol * (1<<1), [0]: ICECandidate.ICEComponent-1
+}
+
+// String() return SDPDeflated in string format (old version compatibility)
+func (SD *SDPDeflated) String() string {
+	return fmt.Sprintf("%d,%d,%d,%d", SD.SDPType, SD.IPUpper64, SD.IPLower64, SD.Composed32)
+}
+
+func SDPDeflatedFromString(SDS string) (SDPDeflated, error) {
+	ParsedSDPD := SDPDeflated{}
+
+	s := strings.Split(string(SDS), ",")
+
+	type64, err := strconv.ParseUint(s[0], 10, 8)
+	if err != nil {
+		return SDPDeflated{}, err
+	}
+	ParsedSDPD.SDPType = uint8(type64)
+
+	ParsedSDPD.IPUpper64, err = strconv.ParseUint(s[1], 10, 64)
+	if err != nil {
+		return SDPDeflated{}, err
+	}
+	ParsedSDPD.IPLower64, err = strconv.ParseUint(s[2], 10, 64)
+	if err != nil {
+		return SDPDeflated{}, err
+	}
+
+	composed64, err := strconv.ParseUint(s[3], 10, 32)
+	if err != nil {
+		return SDPDeflated{}, err
+	}
+	ParsedSDPD.Composed32 = uint32(composed64)
+
+	return ParsedSDPD, nil
+}
 
 func RecoverIPAddr(IPUpper uint64, IPLower uint64) (net.IP, error) {
 	byteIP := make([]byte, 16)
@@ -82,28 +122,21 @@ func InflateICECandidate(IPUpper uint64, IPLower uint64, ComposedUint32 uint32) 
 }
 
 func InflateICECandidateFromSD(SD SDPDeflated) ICECandidate {
-	s := strings.Split(string(SD), ",")
-	IPUpper, _ := strconv.ParseUint(s[1], 10, 64)
-	IPLower, _ := strconv.ParseUint(s[2], 10, 64)
-	ComposedUint32_64, _ := strconv.ParseUint(s[3], 10, 32)
-
-	return InflateICECandidate(IPUpper, IPLower, uint32(ComposedUint32_64))
+	return InflateICECandidate(SD.IPUpper64, SD.IPLower64, SD.Composed32)
 }
 
 func (sd SDPDeflated) Inflate() (*SDP, error) {
-	s := strings.Split(string(sd), ",")
-
 	// SDPType
-	if s[0] == "1" {
+	if sd.SDPType == SDPOffer {
 		return &SDP{
-			SDPType: "offer",
+			SDPType: SDPOfferStr,
 			IceCandidates: []ICECandidate{
 				InflateICECandidateFromSD(sd),
 			},
 		}, nil
-	} else if s[0] == "2" {
+	} else if sd.SDPType == SDPAnswer {
 		return &SDP{
-			SDPType: "answer",
+			SDPType: SDPAnswerStr,
 			IceCandidates: []ICECandidate{
 				InflateICECandidateFromSD(sd),
 			},
@@ -113,38 +146,39 @@ func (sd SDPDeflated) Inflate() (*SDP, error) {
 }
 
 func (S *SDP) Deflate(UseIP net.IP) SDPDeflated {
-	sdp_d := ""
+	builtSDPD := SDPDeflated{}
 
-	if S.SDPType == "offer" {
-		sdp_d += "1"
+	if S.SDPType == SDPOfferStr {
+		builtSDPD.SDPType = SDPOffer
+	} else if S.SDPType == SDPAnswerStr {
+		builtSDPD.SDPType = SDPAnswer
 	} else {
-		sdp_d += "2"
+		return SDPDeflated{}
 	}
 
-	c_ptr := (*ICECandidate)(nil)
+	candidatePtr := (*ICECandidate)(nil)
 
-	if UseIP != nil {
-		// Specified Candidate IP to use, usually it is the Public IP
+	if UseIP != nil { // Specified Candidate IP to use, usually it is the Public IP
 		for _, c := range S.IceCandidates {
 			if c.ipAddr.Equal(UseIP) {
-				c_ptr = &c
+				candidatePtr = &c
 				break
 			}
 		}
-		if c_ptr == nil { // not found
-			return ""
+		if candidatePtr == nil { // not found
+			return SDPDeflated{}
 		}
-	} else {
+	} else { // Otherwise, extract the first IP
 		if len(S.IceCandidates) > 0 {
-			c_ptr = &S.IceCandidates[0]
+			candidatePtr = &S.IceCandidates[0]
 		} else {
 			// Bad SDP
-			return ""
+			return SDPDeflated{}
 		}
 	}
 
 	// IPUpperUint64, IPLowerUint64
-	IPFound := (*c_ptr).ipAddr.To16()
+	IPFound := (*candidatePtr).ipAddr.To16()
 
 	IPUpper := uint64(0)
 	IPLower := uint64(0)
@@ -153,22 +187,17 @@ func (S *SDP) Deflate(UseIP net.IP) SDPDeflated {
 		IPLower += uint64((IPFound[i])&0xFF) << (i * 8)
 	}
 
-	sdp_d += fmt.Sprintf(",%d,%d", IPUpper, IPLower)
+	builtSDPD.IPUpper64 = IPUpper
+	builtSDPD.IPLower64 = IPLower
 
-	// ComposedUint32[16..31]: ICECandidate.port * (1<<16)
-	// ComposedUint32[6..15]: Reserved
-	// ComposedUint32[4..5]: ICECandidate.tcpType * (1<<4)
-	// ComposedUint32[2..3]: ICECandidate.candidateType * (1<<2)
-	// ComposedUint32[1]: ICECandidate.protocol * (1<<1)
-	// ComposedUint32[0]: ICECandidate.ICEComponent-1
 	ComposedUint32 := uint32(0)
-	ComposedUint32 += uint32((*c_ptr).port) << 16
-	ComposedUint32 += uint32((*c_ptr).tcpType) << 4
-	ComposedUint32 += uint32((*c_ptr).candidateType) << 2
-	ComposedUint32 += uint32((*c_ptr).protocol) << 1
-	ComposedUint32 += uint32((*c_ptr).component) - 1
+	ComposedUint32 += uint32((*candidatePtr).port) << 16         // ComposedUint32[16..31]: ICECandidate.port * (1<<16)
+	ComposedUint32 += uint32((*candidatePtr).tcpType) << 4       // ComposedUint32[4..5]: ICECandidate.tcpType * (1<<4)
+	ComposedUint32 += uint32((*candidatePtr).candidateType) << 2 // ComposedUint32[2..3]: ICECandidate.candidateType * (1<<2)
+	ComposedUint32 += uint32((*candidatePtr).protocol) << 1      // ComposedUint32[1]: ICECandidate.protocol * (1<<1)
+	ComposedUint32 += uint32((*candidatePtr).component) - 1      // ComposedUint32[0]: ICECandidate.ICEComponent-1
 
-	sdp_d += fmt.Sprintf(",%d", ComposedUint32)
+	builtSDPD.Composed32 = ComposedUint32
 
-	return SDPDeflated(sdp_d)
+	return builtSDPD
 }

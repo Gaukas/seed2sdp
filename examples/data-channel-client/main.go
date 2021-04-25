@@ -156,7 +156,7 @@ func main() {
 	fmt.Println(JsonOffer)
 	fmt.Println("===================================================")
 	fmt.Println("==================== Def Offer ====================")
-	fmt.Println(DeflatedOffer)
+	fmt.Println(DeflatedOffer.String())
 	fmt.Println("===================================================")
 	AnswerCandidateHost := s2s.ICECandidate{}
 	AnswerCandidateHost.

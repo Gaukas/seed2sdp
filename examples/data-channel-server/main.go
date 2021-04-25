@@ -162,7 +162,8 @@ func main() {
 		})
 	})
 	//// Stop setting handlers ///
-	offerCandidate := s2s.InflateICECandidateFromSD(s2s.SDPDeflated(MustReadStdin()))
+	SDPD, err := s2s.SDPDeflatedFromString(MustReadStdin())
+	offerCandidate := s2s.InflateICECandidateFromSD(SDPD)
 
 	err = dataChannel.SetOffer([]s2s.ICECandidate{offerCandidate})
 	if err != nil {
@@ -182,7 +183,7 @@ func main() {
 	fmt.Println(JsonAnswer)
 	fmt.Println("====================================================")
 	fmt.Println("==================== Def Answer ====================")
-	fmt.Println(DeflatedAnswer)
+	fmt.Println(DeflatedAnswer.String())
 	fmt.Println("====================================================")
 
 	select {}

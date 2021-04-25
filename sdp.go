@@ -78,8 +78,8 @@ func parseCandidate(candidate_text string) ICECandidate {
 
 	// fmt.Println("Candidate splited into", len(splitC), "parts.")
 
-	foundation_64, _ := strconv.ParseUint(splitC[0], 10, 32)
-	component_64, _ := strconv.ParseUint(splitC[1], 10, 8)
+	foundation64, _ := strconv.ParseUint(splitC[0], 10, 32)
+	component64, _ := strconv.ParseUint(splitC[1], 10, 8)
 	protocol := func() ICENetworkProtocol {
 		switch strings.ToLower(splitC[2]) {
 		case "udp":
@@ -89,8 +89,8 @@ func parseCandidate(candidate_text string) ICECandidate {
 		}
 		return BADNETWORKPROTOCOL
 	}()
-	priority_64, _ := strconv.ParseUint(splitC[3], 10, 32)
-	port_64, _ := strconv.ParseUint(splitC[5], 10, 16)
+	priority64, _ := strconv.ParseUint(splitC[3], 10, 32)
+	port64, _ := strconv.ParseUint(splitC[5], 10, 16)
 	candidateType := func() ICECandidateType {
 		switch strings.ToLower(splitC[7]) {
 		case "host":
@@ -106,21 +106,21 @@ func parseCandidate(candidate_text string) ICECandidate {
 	}()
 
 	return ICECandidate{
-		foundation:    uint32(foundation_64),
-		component:     ICEComponent(component_64),
+		foundation:    uint32(foundation64),
+		component:     ICEComponent(component64),
 		protocol:      protocol,
-		priority:      uint32(priority_64),
+		priority:      uint32(priority64),
 		ipAddr:        net.ParseIP(splitC[4]),
-		port:          uint16(port_64),
+		port:          uint16(port64),
 		candidateType: candidateType,
 		// tcpType: ,
 	}
 }
 
-func ParseSDP(sdp_text string) SDP {
+func ParseSDP(sdpText string) SDP {
 	S := SDP{}
-	isOffer, _ := regexp.MatchString(`"type":"offer"`, sdp_text)
-	isAnswer, _ := regexp.MatchString(`"type":"answer"`, sdp_text)
+	isOffer, _ := regexp.MatchString(`"type":"offer"`, sdpText)
+	isAnswer, _ := regexp.MatchString(`"type":"answer"`, sdpText)
 	if isOffer {
 		S.SDPType = "offer" // 0 for offer
 	} else if isAnswer {
@@ -132,7 +132,7 @@ func ParseSDP(sdp_text string) SDP {
 
 	// Extract all candidates
 	reAllCandidate := regexp.MustCompile(`a=candidate:.*?\\r\\n`)
-	candidates := reAllCandidate.FindAllString(sdp_text, -1)
+	candidates := reAllCandidate.FindAllString(sdpText, -1)
 
 	for _, candidate := range candidates {
 		S.IceCandidates = append(S.IceCandidates, parseCandidate(candidate))
