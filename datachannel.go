@@ -171,7 +171,7 @@ func (d *DataChannel) SetNetworkTypes(candidateTypes []webrtc.NetworkType) *Data
 
 // ReadyToSend() when Data Channal is opened and is not exceeding the bytes limit.
 func (d *DataChannel) ReadyToSend() bool {
-	return (d.WebRTCDataChannel.ReadyState() == webrtc.DataChannelStateOpen) && (d.WebRTCDataChannel.BufferedAmount() < DataChannelBufferBytesLim)
+	return (d.WebRTCDataChannel.ReadyState() == webrtc.DataChannelStateOpen) && (d.WebRTCDataChannel.BufferedAmount() < d.config.TxBufferSize)
 }
 
 // Send []byte object via Data Channel
