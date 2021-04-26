@@ -8,4 +8,5 @@ type DataChannelConfig struct {
 	PeerHkdfParams *HKDFParams
 	PeerMedias     []SDPMedia
 	PeerAttributes []SDPAttribute
+	TxBufferSize   uint64
 }

@@ -18,6 +18,10 @@ type DataChannel struct {
 
 // DeclareDatachannel sets all the predetermined information needed to
 func DeclareDatachannel(newconfig *DataChannelConfig) *DataChannel {
+	if newconfig.TxBufferSize == 0 {
+		newconfig.TxBufferSize = DataChannelBufferBytesLim // Default: 1K
+	}
+
 	// Initialize the struct
 	dataChannel := DataChannel{
 		config:              newconfig,
