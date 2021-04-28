@@ -85,12 +85,15 @@ func main() {
 			},
 		},
 	)
+	//// SettingEngine Section ////
 
 	//// Set IP/Port here ///
 
 	dataChannel.
 		SetIP([]string{serverIP.String()}, s2s.Host).
-		SetPort(serverPort) //.SetNetworkTypes()
+		SetPort(serverPort).
+		SetDTLSActive()
+		//.SetNetworkTypes()
 
 	/////////////////////////
 

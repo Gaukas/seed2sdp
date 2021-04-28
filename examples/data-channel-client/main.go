@@ -69,7 +69,7 @@ func main() {
 				},
 				{
 					Key:   "setup",
-					Value: "active",
+					Value: "active", // "passive" if server calls SetDTLSPassive()
 				},
 				{
 					Key:   "mid",
@@ -85,6 +85,12 @@ func main() {
 			},
 		},
 	)
+	//// SettingEngine section ////
+
+	// dataChannel.
+	// 	SetDTLSPassive() // DON'T SET ON CLIENT. SET ON SERVER.
+
+	//// END OF SettingEngine ////
 
 	if dataChannel.Initialize() != nil {
 		fmt.Println("[Fatal] Client failed to initialize a data channel instance.")

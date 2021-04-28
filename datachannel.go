@@ -16,7 +16,7 @@ type DataChannel struct {
 	WebRTCDataChannel    *webrtc.DataChannel
 }
 
-// DeclareDatachannel sets all the predetermined information needed to
+// DeclareDatachannel sets all the predetermined information needed to establish Peer Connection.
 func DeclareDatachannel(newconfig *DataChannelConfig) *DataChannel {
 	if newconfig.TxBufferSize == 0 {
 		newconfig.TxBufferSize = DataChannelBufferBytesLim // Default: 1K
@@ -45,6 +45,7 @@ func DeclareDatachannel(newconfig *DataChannelConfig) *DataChannel {
 	return &dataChannel
 }
 
+// Initialize the DataChannel instance. From now on the SettingEngine functions will be no longer effective.
 func (d *DataChannel) Initialize() error {
 	var err error
 	api := webrtc.NewAPI(webrtc.WithSettingEngine(d.WebRTCSettingEngine))
@@ -141,6 +142,9 @@ func (d *DataChannel) SetAnswer(remoteCandidates []ICECandidate) error {
 	return errors.New("SelfSDPType in config: " + d.config.SelfSDPType + " can't set answer.")
 }
 
+// SettingEngine utilization
+
+// SetPort sets the port for candidates. (For both Host's port and Srflx's local port)
 func (d *DataChannel) SetPort(port uint16) *DataChannel {
 	if d.WebRTCSettingEngine.SetEphemeralUDPPortRange(port, port) != nil {
 		return nil
@@ -148,6 +152,7 @@ func (d *DataChannel) SetPort(port uint16) *DataChannel {
 	return d
 }
 
+// SetIP sets IP for ICE agents to treat as 1 to 1 IPs
 // ips: list of IP in string
 // iptype: Host (if full 1-to-1 DNAT), Srflx (if behind a NAT)
 func (d *DataChannel) SetIP(ips []string, iptype ICECandidateType) *DataChannel {
@@ -164,8 +169,29 @@ func (d *DataChannel) SetIP(ips []string, iptype ICECandidateType) *DataChannel 
 	return d
 }
 
+// SetNetworkTypes specify the candidates' network type for ICE agent to gather.
 func (d *DataChannel) SetNetworkTypes(candidateTypes []webrtc.NetworkType) *DataChannel {
 	d.WebRTCSettingEngine.SetNetworkTypes(candidateTypes)
+	return d
+}
+
+// SetInterfaceFilter uses the filter function and only gather candidates when filter(interface_name.String())==true
+func (d *DataChannel) SetInterfaceFilter(filter func(string) bool) *DataChannel {
+	d.WebRTCSettingEngine.SetInterfaceFilter(filter)
+	return d
+}
+
+// SetDTLSActive() makes this instance creates the DTLS Connection (Send ClientHello).
+// Only works for server (SDP answerer)
+func (d *DataChannel) SetDTLSActive() *DataChannel {
+	d.WebRTCSettingEngine.SetAnsweringDTLSRole(webrtc.DTLSRoleClient)
+	return d
+}
+
+// SetDTLSPassive() makes this instance waits the DTLS Connection (Wait for ClientHello).
+// Only works for server (SDP answerer)
+func (d *DataChannel) SetDTLSPassive() *DataChannel {
+	d.WebRTCSettingEngine.SetAnsweringDTLSRole(webrtc.DTLSRoleServer)
 	return d
 }
 
