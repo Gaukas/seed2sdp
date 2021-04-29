@@ -168,7 +168,9 @@ func (S *SDP) Deflate(UseIP net.IP) SDPDeflated {
 		if candidatePtr == nil { // not found
 			return SDPDeflated{}
 		}
-	} else { // Otherwise, extract the first IP
+	} else { // Otherwise, extract the first non-internal IP
+		// TO-DO: https://stackoverflow.com/questions/41240761/check-if-ip-address-is-in-private-network-space
+		// Currently extract first IP.
 		if len(S.IceCandidates) > 0 {
 			candidatePtr = &S.IceCandidates[0]
 		} else {
