@@ -69,24 +69,6 @@ func RecoverIPAddr(IPUpper uint64, IPLower uint64) (net.IP, error) {
 
 	RecoveredIP := net.IP(byteIP)
 
-	// RecoveredIP := net.IP{uint8((IPUpper >> 56) & 0xFF),
-	// 	uint8((IPUpper >> 48) & 0xFF),
-	// 	uint8((IPUpper >> 40) & 0xFF),
-	// 	uint8((IPUpper >> 32) & 0xFF),
-	// 	uint8((IPUpper >> 24) & 0xFF),
-	// 	uint8((IPUpper >> 16) & 0xFF),
-	// 	uint8((IPUpper >> 8) & 0xFF),
-	// 	uint8((IPUpper >> 0) & 0xFF),
-	// 	uint8((IPLower >> 56) & 0xFF),
-	// 	uint8((IPLower >> 48) & 0xFF),
-	// 	uint8((IPLower >> 40) & 0xFF),
-	// 	uint8((IPLower >> 32) & 0xFF),
-	// 	uint8((IPLower >> 24) & 0xFF),
-	// 	uint8((IPLower >> 16) & 0xFF),
-	// 	uint8((IPLower >> 8) & 0xFF),
-	// 	uint8((IPLower >> 0) & 0xFF),
-	// }
-
 	// Check if valid IP
 	if RecoveredIP.To16() == nil {
 		return nil, errors.New("Invalid IP")
