@@ -153,11 +153,14 @@ func (S *SDP) Deflate(UseIP net.IP) SDPDeflated {
 	} else { // Otherwise, extract the first non-internal IP
 		// TO-DO: https://stackoverflow.com/questions/41240761/check-if-ip-address-is-in-private-network-space
 		// Currently extract first IP.
-		if len(S.IceCandidates) > 0 {
-			candidatePtr = &S.IceCandidates[0]
-		} else {
-			// Bad SDP
-			return SDPDeflated{}
+		for _, c := range S.IceCandidates {
+			if !isPrivateIP(c.ipAddr) { // not private
+				candidatePtr = &c
+				break
+			}
+		}
+		if candidatePtr == nil { // not found
+			return SDPDeflated{} // Bad SDP due to no external IP
 		}
 	}
 
