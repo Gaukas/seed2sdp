@@ -57,6 +57,8 @@ func getX509Tpl(hkdfParams *HKDFParams) (*x509.Certificate, error) {
 	}, nil
 }
 
+// NewCertificate() might be ambiguous: we have notices 2 possible version of Certificates.
+// Use GetCertificate() instead.
 func NewCertificate(hkdfParams *HKDFParams) (webrtc.Certificate, error) {
 	privkey, err := getPrivkey(hkdfParams)
 	if err != nil {
@@ -82,7 +84,7 @@ func NewCertificate(hkdfParams *HKDFParams) (webrtc.Certificate, error) {
 	return webrtc.CertificateFromX509(privkey, cert), nil
 }
 
-// GetCertificate generates DTLS Certificate used for webrtc.
+// GetCertificate() generates DTLS Certificate used for webrtc.
 func GetCertificate(hkdfParams *HKDFParams) (webrtc.Certificate, error) {
 	firstCert, err := NewCertificate(hkdfParams)
 	if err != nil {
