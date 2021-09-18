@@ -1,7 +1,6 @@
 package seed2sdp
 
 import (
-	"errors"
 	"fmt"
 	"net"
 	"strconv"
@@ -71,7 +70,7 @@ func RecoverIPAddr(IPUpper uint64, IPLower uint64) (net.IP, error) {
 
 	// Check if valid IP
 	if RecoveredIP.To16() == nil {
-		return nil, errors.New("Invalid IP")
+		return nil, ErrInvalidIP
 	}
 
 	return RecoveredIP, nil
@@ -124,7 +123,7 @@ func (sd SDPDeflated) Inflate() (*SDP, error) {
 			},
 		}, nil
 	}
-	return nil, errors.New("")
+	return nil, ErrInvalidSDPType
 }
 
 func (S *SDP) Deflate(UseIP net.IP) SDPDeflated {

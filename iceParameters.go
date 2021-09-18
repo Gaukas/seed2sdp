@@ -2,7 +2,6 @@ package seed2sdp
 
 import (
 	"crypto/sha256"
-	"errors"
 
 	randutil "github.com/Gaukas/randutil_kai"
 	"github.com/pion/webrtc/v3"
@@ -57,7 +56,7 @@ func (i ICEParameters) Equal(d ICEParameters) bool {
 
 func (i *ICEParameters) UpdateSettingEngine(se *webrtc.SettingEngine) error {
 	if i.UsernameFragment == "" || i.Password == "" {
-		return errors.New("Malformed ICEParameters")
+		return ErrMalformedICEParameters
 	}
 	se.SetICECredentials(i.UsernameFragment, i.Password)
 	return nil

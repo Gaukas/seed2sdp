@@ -23,15 +23,10 @@ func NewSDPMalleables() SDPMalleables {
 	}
 }
 
-// To-Do: Figure out Origin?
-func PredictSDPMalleables(HkdfParams *HKDFParams) SDPMalleables {
+// Reserved
+func PredictSDPMalleables(_ *HKDFParams) SDPMalleables {
 	sdpm := NewSDPMalleables()
 	return sdpm
-}
-
-// Kept for compatibility
-func SDPMalleablesFromSeed(HkdfParams *HKDFParams) SDPMalleables {
-	return NewSDPMalleables()
 }
 
 // v=0

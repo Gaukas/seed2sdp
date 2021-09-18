@@ -8,7 +8,6 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/hex"
-	"errors"
 	"math/big"
 	"time"
 
@@ -113,5 +112,5 @@ func GetCertificate(hkdfParams *HKDFParams) (webrtc.Certificate, error) {
 		}
 	}
 
-	return webrtc.Certificate{}, errors.New("while(1) broken")
+	// return webrtc.Certificate{}, errors.New("while(1) broken")
 }

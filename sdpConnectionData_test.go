@@ -1,19 +1,12 @@
 package seed2sdp
 
 import (
-	"errors"
 	"testing"
 )
 
 const (
 	newSDPConnDataStr    = "IN IP4 0.0.0.0"
 	customSDPConnDataStr = "IN IP6 ::1"
-)
-
-var (
-	errNewConnectionDataNotMatch     = errors.New("The Default New Connection Data does not match expectation.")
-	errNewConnectionDataBadString    = errors.New("The New Connection Data String does not match expectation.")
-	errCustomConnectionDataBadString = errors.New("The Custom Connection Data String does not match expectation.")
 )
 
 func TestSDPConnectionData(t *testing.T) {
