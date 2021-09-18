@@ -138,34 +138,35 @@ func (S *SDP) Deflate(UseIP net.IP) SDPDeflated {
 		return SDPDeflated{}
 	}
 
-	candidatePtr := (*ICECandidate)(nil)
+	properCandidate := ICECandidate{
+		port: 0,
+	}
 
 	if UseIP != nil { // Specified Candidate IP to use, usually it is the Public IP
 		for _, c := range S.IceCandidates {
 			if c.ipAddr.Equal(UseIP) {
-				candidatePtr = &c
+				properCandidate = c
 				break
 			}
 		}
-		if candidatePtr == nil { // not found
-			return SDPDeflated{}
-		}
+
 	} else { // Otherwise, extract the first non-internal IP
 		// TO-DO: https://stackoverflow.com/questions/41240761/check-if-ip-address-is-in-private-network-space
 		// Currently extract first IP.
 		for _, c := range S.IceCandidates {
 			if !isPrivateIP(c.ipAddr) { // not private
-				candidatePtr = &c
+				properCandidate = c
 				break
 			}
 		}
-		if candidatePtr == nil { // not found
-			return SDPDeflated{} // Bad SDP due to no external IP
-		}
+	}
+
+	if properCandidate.port == 0 { // not found
+		return SDPDeflated{}
 	}
 
 	// IPUpperUint64, IPLowerUint64
-	IPFound := (*candidatePtr).ipAddr.To16()
+	IPFound := properCandidate.ipAddr.To16()
 
 	IPUpper := uint64(0)
 	IPLower := uint64(0)
@@ -178,11 +179,11 @@ func (S *SDP) Deflate(UseIP net.IP) SDPDeflated {
 	builtSDPD.IPLower64 = IPLower
 
 	ComposedUint32 := uint32(0)
-	ComposedUint32 += uint32((*candidatePtr).port) << 16         // ComposedUint32[16..31]: ICECandidate.port * (1<<16)
-	ComposedUint32 += uint32((*candidatePtr).tcpType) << 4       // ComposedUint32[4..5]: ICECandidate.tcpType * (1<<4)
-	ComposedUint32 += uint32((*candidatePtr).candidateType) << 2 // ComposedUint32[2..3]: ICECandidate.candidateType * (1<<2)
-	ComposedUint32 += uint32((*candidatePtr).protocol) << 1      // ComposedUint32[1]: ICECandidate.protocol * (1<<1)
-	ComposedUint32 += uint32((*candidatePtr).component) - 1      // ComposedUint32[0]: ICECandidate.ICEComponent-1
+	ComposedUint32 += uint32(properCandidate.port) << 16         // ComposedUint32[16..31]: ICECandidate.port * (1<<16)
+	ComposedUint32 += uint32(properCandidate.tcpType) << 4       // ComposedUint32[4..5]: ICECandidate.tcpType * (1<<4)
+	ComposedUint32 += uint32(properCandidate.candidateType) << 2 // ComposedUint32[2..3]: ICECandidate.candidateType * (1<<2)
+	ComposedUint32 += uint32(properCandidate.protocol) << 1      // ComposedUint32[1]: ICECandidate.protocol * (1<<1)
+	ComposedUint32 += uint32(properCandidate.component) - 1      // ComposedUint32[0]: ICECandidate.ICEComponent-1
 
 	builtSDPD.Composed32 = ComposedUint32
 

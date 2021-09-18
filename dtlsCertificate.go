@@ -91,6 +91,9 @@ func GetCertificate(hkdfParams *HKDFParams) (webrtc.Certificate, error) {
 		return webrtc.Certificate{}, err
 	}
 	firstFps, err := firstCert.GetFingerprints()
+	if err != nil {
+		return webrtc.Certificate{}, err
+	}
 
 	for {
 		time.Sleep(1000000 * time.Nanosecond) // 1 cert/ms
@@ -99,6 +102,9 @@ func GetCertificate(hkdfParams *HKDFParams) (webrtc.Certificate, error) {
 			return webrtc.Certificate{}, err
 		}
 		nextFps, err := nextCert.GetFingerprints()
+		if err != nil {
+			return webrtc.Certificate{}, err
+		}
 
 		if nextFps[0].Value > firstFps[0].Value {
 			return nextCert, nil

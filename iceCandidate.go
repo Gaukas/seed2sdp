@@ -185,34 +185,6 @@ func (c *ICECandidate) SetTcpType(tcpType ice.TCPType) {
 	c.tcpType = tcpType
 }
 
-func candidateToString(c ICECandidate) string {
-	parsedCandidate := fmt.Sprintf(`a=candidate:%d %d %s %d %s %d typ %s`,
-		c.Foundation(),
-		c.component,
-		c.protocol.String(),
-		c.Priority(),
-		c.ipAddr.String(),
-		c.port,
-		c.candidateType.String())
-
-	// TODO: TCP: Append TcpType
-
-	parsedCandidate += `\r\n`
-
-	return parsedCandidate
-}
-
-func candidatesToString(arrc []ICECandidate) string {
-	parsedCandidates := ""
-
-	for _, c := range arrc {
-		parsedCandidates += candidateToString(c)
-	}
-
-	parsedCandidates += `a=end-of-candidates\r\n`
-	return parsedCandidates
-}
-
 func candidateToAttribute(c ICECandidate) SDPAttribute {
 	return SDPAttribute{
 		Key: "candidate",
