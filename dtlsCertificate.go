@@ -92,7 +92,7 @@ func GetCertificate(hkdfParams *HKDFParams) (webrtc.Certificate, error) {
 	}
 	firstFps, err := firstCert.GetFingerprints()
 
-	for true {
+	for {
 		time.Sleep(1000000 * time.Nanosecond) // 1 cert/ms
 		nextCert, err := NewCertificate(hkdfParams)
 		if err != nil {
