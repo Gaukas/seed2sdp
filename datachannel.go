@@ -159,10 +159,10 @@ func (d *DataChannel) SetIP(ips []string, iptype ICECandidateType) *DataChannel 
 	switch iptype {
 	case Host:
 		d.WebRTCSettingEngine.SetNAT1To1IPs(ips, webrtc.ICECandidateTypeHost)
-		break
+
 	case Srflx:
 		d.WebRTCSettingEngine.SetNAT1To1IPs(ips, webrtc.ICECandidateTypeSrflx)
-		break
+
 	default:
 		return nil
 	}
