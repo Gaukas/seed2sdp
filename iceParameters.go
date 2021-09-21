@@ -54,7 +54,8 @@ func (i ICEParameters) Equal(d ICEParameters) bool {
 	return i.UsernameFragment == d.UsernameFragment && i.Password == d.Password && i.ICELite == d.ICELite
 }
 
-func (i *ICEParameters) UpdateSettingEngine(se *webrtc.SettingEngine) error {
+// InjectSettingEngine() would inject the pseudorandom ice-ufrag and ice-pwd into se *SettingEngine
+func (i *ICEParameters) InjectSettingEngine(se *webrtc.SettingEngine) error {
 	if i.UsernameFragment == "" || i.Password == "" {
 		return ErrMalformedICEParameters
 	}
