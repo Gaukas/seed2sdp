@@ -1,5 +1,5 @@
 # seed2sdp
-[![Build Status](https://travis-ci.com/Gaukas/seed2sdp.svg?branch=master)](https://travis-ci.com/Gaukas/seed2sdp)
+![Golang Test Build](https://github.com/Gaukas/seed2sdp/actions/workflows/go.yml/badge.svg)
 
 ---
 
