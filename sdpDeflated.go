@@ -126,65 +126,112 @@ func (sd SDPDeflated) Inflate() (*SDP, error) {
 	return nil, ErrInvalidSDPType
 }
 
-func (S *SDP) Deflate(UseIP net.IP) SDPDeflated {
-	builtSDPD := SDPDeflated{}
+// GroupInflate() should be used when you want to put multiple SDPDeflated into one single SDP
+// but why?
+func GroupInflate(sds []SDPDeflated) (*SDP, error) {
+	var firstSDPType string // get type from first one. will error if there are inconsistent types
+	if sds[0].SDPType == SDPOffer {
+		firstSDPType = SDPOfferStr
+	} else if sds[0].SDPType == SDPAnswer {
+		firstSDPType = SDPAnswerStr
+	} else {
+		return nil, ErrInvalidSDPType
+	}
+
+	allICECandidates := []ICECandidate{
+		InflateICECandidateFromSD(sds[0]),
+	}
+	for _, sd := range sds[1:] {
+		if sd.SDPType != sds[0].SDPType { // All SDPType must be consistent
+			return nil, ErrInvalidSDPType
+		}
+		allICECandidates = append(allICECandidates, InflateICECandidateFromSD(sd))
+	}
+
+	return &SDP{
+		SDPType:       firstSDPType,
+		IceCandidates: allICECandidates,
+	}, nil
+}
+
+func (S *SDP) GroupDeflate(UseIPs []net.IP) []SDPDeflated {
+	var sliceSdpDeflated = []SDPDeflated{}
+	var sdpType uint8
 
 	if S.SDPType == SDPOfferStr {
-		builtSDPD.SDPType = SDPOffer
+		sdpType = SDPOffer
 	} else if S.SDPType == SDPAnswerStr {
-		builtSDPD.SDPType = SDPAnswer
+		sdpType = SDPAnswer
+	} else {
+		return []SDPDeflated{}
+	}
+
+	var properCandidates []ICECandidate = []ICECandidate{}
+
+	if len(UseIPs) != 0 { // If specified at least one IP, find those IPs
+		for _, c := range S.IceCandidates {
+			for idx, UseIP := range UseIPs {
+				if c.ipAddr.Equal(UseIP) {
+					properCandidates = append(properCandidates, c)
+
+					// Remove the matched IP from the slice (as we use bundle, RTP vs RTCP doesn't matter)
+					UseIPs = append(UseIPs[:idx], UseIPs[idx+1:]...)
+
+					break // Out of this current loop interating over UseIPs. Stay in the loop iterating over IceCandidates.
+				}
+			}
+		}
+	} else { // Otherwise, extract the all non-internal IPs
+		var exclusiveMap = map[string]bool{} // keep all IPs appear once only, as we use bundle (RTP vs RTCP doesn't matter)
+		for _, c := range S.IceCandidates {
+			if !isPrivateIP(c.ipAddr) { // not private
+				if _, ok := exclusiveMap[c.ipAddr.String()]; !ok { // never seen before
+					exclusiveMap[c.ipAddr.String()] = true
+					properCandidates = append(properCandidates, c)
+				}
+			}
+		}
+	}
+
+	// Now process the properCandidates
+	for _, properCandidate := range properCandidates {
+		sdpDeflated := SDPDeflated{
+			SDPType: sdpType,
+		}
+
+		// IPUpperUint64, IPLowerUint64
+		IP := properCandidate.ipAddr.To16()
+
+		IPUpper := uint64(0)
+		IPLower := uint64(0)
+		for i := 7; i >= 0; i-- {
+			IPUpper += uint64((IP[i+8])&0xFF) << (i * 8)
+			IPLower += uint64((IP[i])&0xFF) << (i * 8)
+		}
+		sdpDeflated.IPUpper64 = IPUpper
+		sdpDeflated.IPLower64 = IPLower
+
+		ComposedUint32 := uint32(0)
+		ComposedUint32 += uint32(properCandidate.port) << 16         // ComposedUint32[16..31]: ICECandidate.port * (1<<16)
+		ComposedUint32 += uint32(properCandidate.tcpType) << 4       // ComposedUint32[4..5]: ICECandidate.tcpType * (1<<4)
+		ComposedUint32 += uint32(properCandidate.candidateType) << 2 // ComposedUint32[2..3]: ICECandidate.candidateType * (1<<2)
+		ComposedUint32 += uint32(properCandidate.protocol) << 1      // ComposedUint32[1]: ICECandidate.protocol * (1<<1)
+		ComposedUint32 += uint32(properCandidate.component) - 1      // ComposedUint32[0]: ICECandidate.ICEComponent-1
+		sdpDeflated.Composed32 = ComposedUint32
+
+		sliceSdpDeflated = append(sliceSdpDeflated, sdpDeflated)
+	}
+
+	return sliceSdpDeflated
+}
+
+// Deflate() will create the SDPDeflated corresponding to the UseIP.
+// when UseIP == nil, automatically extrace the SDPDeflated corresponding to the FIRST non-private IP (not recommended due to lack of priority checking)
+func (S *SDP) Deflate(UseIP net.IP) SDPDeflated {
+	sdpDefs := S.GroupDeflate([]net.IP{UseIP})
+	if len(sdpDefs) > 0 { // not empty
+		return sdpDefs[0]
 	} else {
 		return SDPDeflated{}
 	}
-
-	properCandidate := ICECandidate{
-		port: 0,
-	}
-
-	if UseIP != nil { // Specified Candidate IP to use, usually it is the Public IP
-		for _, c := range S.IceCandidates {
-			if c.ipAddr.Equal(UseIP) {
-				properCandidate = c
-				break
-			}
-		}
-
-	} else { // Otherwise, extract the first non-internal IP
-		// TO-DO: https://stackoverflow.com/questions/41240761/check-if-ip-address-is-in-private-network-space
-		// Currently extract first IP.
-		for _, c := range S.IceCandidates {
-			if !isPrivateIP(c.ipAddr) { // not private
-				properCandidate = c
-				break
-			}
-		}
-	}
-
-	if properCandidate.port == 0 { // not found
-		return SDPDeflated{}
-	}
-
-	// IPUpperUint64, IPLowerUint64
-	IPFound := properCandidate.ipAddr.To16()
-
-	IPUpper := uint64(0)
-	IPLower := uint64(0)
-	for i := 7; i >= 0; i-- {
-		IPUpper += uint64((IPFound[i+8])&0xFF) << (i * 8)
-		IPLower += uint64((IPFound[i])&0xFF) << (i * 8)
-	}
-
-	builtSDPD.IPUpper64 = IPUpper
-	builtSDPD.IPLower64 = IPLower
-
-	ComposedUint32 := uint32(0)
-	ComposedUint32 += uint32(properCandidate.port) << 16         // ComposedUint32[16..31]: ICECandidate.port * (1<<16)
-	ComposedUint32 += uint32(properCandidate.tcpType) << 4       // ComposedUint32[4..5]: ICECandidate.tcpType * (1<<4)
-	ComposedUint32 += uint32(properCandidate.candidateType) << 2 // ComposedUint32[2..3]: ICECandidate.candidateType * (1<<2)
-	ComposedUint32 += uint32(properCandidate.protocol) << 1      // ComposedUint32[1]: ICECandidate.protocol * (1<<1)
-	ComposedUint32 += uint32(properCandidate.component) - 1      // ComposedUint32[0]: ICECandidate.ICEComponent-1
-
-	builtSDPD.Composed32 = ComposedUint32
-
-	return builtSDPD
 }
