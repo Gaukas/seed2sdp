@@ -19,7 +19,7 @@ func TestSDPDeflated(t *testing.T) {
 	if err != nil {
 		t.Error(errSDPDeflatedFromStringError)
 	}
-	if offerSDPDefl.SDPType != 1 || offerSDPDefl.IPUpper64 != 9518543359329632256 || offerSDPDefl.IPLower64 != 0 || offerSDPDefl.Composed32 != 3351379968 {
+	if offerSDPDefl.SDPType != 1 || len(offerSDPDefl.Candidates) != 1 || offerSDPDefl.Candidates[0].IPUpper64 != 9518543359329632256 || offerSDPDefl.Candidates[0].IPLower64 != 0 || offerSDPDefl.Candidates[0].Composed32 != 3351379968 {
 		t.Error(errSDPDeflatedFromStringUnexptected)
 	}
 
@@ -27,11 +27,11 @@ func TestSDPDeflated(t *testing.T) {
 	if err != nil {
 		t.Error(errSDPDeflatedFromStringError)
 	}
-	if answerSDPDefl.SDPType != 2 || answerSDPDefl.IPUpper64 != 9518543359329632256 || answerSDPDefl.IPLower64 != 0 || answerSDPDefl.Composed32 != 1771503616 {
+	if answerSDPDefl.SDPType != 2 || len(answerSDPDefl.Candidates) != 1 || answerSDPDefl.Candidates[0].IPUpper64 != 9518543359329632256 || answerSDPDefl.Candidates[0].IPLower64 != 0 || answerSDPDefl.Candidates[0].Composed32 != 1771503616 {
 		t.Error(errSDPDeflatedFromStringUnexptected)
 	}
 
-	recoveredIP, err := RecoverIPAddr(answerSDPDefl.IPUpper64, answerSDPDefl.IPLower64)
+	recoveredIP, err := answerSDPDefl.Candidates[0].IPAddr()
 	if err != nil {
 		t.Error(errRecoverIPAddrError)
 	}

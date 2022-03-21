@@ -185,6 +185,31 @@ func (c *ICECandidate) SetTcpType(tcpType ice.TCPType) {
 	c.tcpType = tcpType
 }
 
+func (c *ICECandidate) Deflate() DeflatedICECandidate {
+	deflated := DeflatedICECandidate{}
+	// IPUpperUint64, IPLowerUint64
+	IP := c.ipAddr.To16()
+
+	IPUpper := uint64(0)
+	IPLower := uint64(0)
+	for i := 7; i >= 0; i-- {
+		IPUpper += uint64((IP[i+8])&0xFF) << (i * 8)
+		IPLower += uint64((IP[i])&0xFF) << (i * 8)
+	}
+	deflated.IPUpper64 = IPUpper
+	deflated.IPLower64 = IPLower
+
+	ComposedUint32 := uint32(0)
+	ComposedUint32 += uint32(c.port) << 16         // ComposedUint32[16..31]: ICECandidate.port * (1<<16)
+	ComposedUint32 += uint32(c.tcpType) << 4       // ComposedUint32[4..5]: ICECandidate.tcpType * (1<<4)
+	ComposedUint32 += uint32(c.candidateType) << 2 // ComposedUint32[2..3]: ICECandidate.candidateType * (1<<2)
+	ComposedUint32 += uint32(c.protocol) << 1      // ComposedUint32[1]: ICECandidate.protocol * (1<<1)
+	ComposedUint32 += uint32(c.component) - 1      // ComposedUint32[0]: ICECandidate.ICEComponent-1
+	deflated.Composed32 = ComposedUint32
+
+	return deflated
+}
+
 func candidateToAttribute(c ICECandidate) SDPAttribute {
 	return SDPAttribute{
 		Key: "candidate",
